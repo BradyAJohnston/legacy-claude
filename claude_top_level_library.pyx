@@ -79,21 +79,21 @@ cpdef radiation_calculation(np.ndarray temperature_world, np.ndarray potential_t
 	cdef np.ndarray optical_depth = np.outer(sun_lat, (fl*(pressure_levels/pressure_levels[0]) + (1-fl)*(pressure_levels/pressure_levels[0])**4))
 
 	# calculate upward longwave flux, bc is thermal radiation at surface
-	cpdef np.ndarray upward_radiation = np.zeros((nlat,nlon,nlevels))
+	cdef np.ndarray upward_radiation = np.zeros((nlat,nlon,nlevels))
 	upward_radiation[:,:,0] = low_level.thermal_radiation_matrix(temperature_world)
 	for k in np.arange(1,nlevels):
 		upward_radiation[:,:,k] = (upward_radiation[:,:,k-1] - (optical_depth[:,None,k]-optical_depth[:,None,k-1])*(low_level.thermal_radiation_matrix(temperature_atmos[:,:,k])))/(1 + optical_depth[:,None,k-1] - optical_depth[:,None,k])
 
 	# calculate downward longwave flux, bc is zero at TOA (in model)
-	cpdef np.ndarray downward_radiation = np.zeros((nlat,nlon,nlevels))
+	cdef np.ndarray downward_radiation = np.zeros((nlat,nlon,nlevels))
 	downward_radiation[:,:,-1] = 0
 	for k in np.arange(0,nlevels-1)[::-1]:
 		downward_radiation[:,:,k] = (downward_radiation[:,:,k+1] - low_level.thermal_radiation_matrix(temperature_atmos[:,:,k])*(optical_depth[:,None,k+1]-optical_depth[:,None,k]))/(1 + optical_depth[:,None,k] - optical_depth[:,None,k+1])
 	
 	# gradient of difference provides heating at each level
-	cpdef np.ndarray Q = np.zeros((nlat,nlon,nlevels))
-	cpdef np.ndarray z_gradient = low_level.scalar_gradient_z_matrix_primitive(upward_radiation - downward_radiation, pressure_levels)
-	cpdef np.ndarray solar_matrix = low_level.solar_matrix(75,lat,lon,t,day, year, axial_tilt)
+	cdef np.ndarray Q = np.zeros((nlat,nlon,nlevels))
+	cdef np.ndarray z_gradient = low_level.scalar_gradient_z_matrix_primitive(upward_radiation - downward_radiation, pressure_levels)
+	cdef np.ndarray solar_matrix = low_level.solar_matrix(75,lat,lon,t,day, year, axial_tilt)
 	for k in np.arange(nlevels):
 		Q[:,:,k] = -287*temperature_atmos[:,:,k]*z_gradient[:,:,k]/(1000*pressure_levels[None,None,k])
 		# approximate SW heating of ozone
@@ -110,28 +110,28 @@ cpdef radiation_calculation(np.ndarray temperature_world, np.ndarray potential_t
 cpdef velocity_calculation(np.ndarray u,np.ndarray v,np.ndarray w,np.ndarray pressure_levels,np.ndarray geopotential,np.ndarray potential_temperature,np.ndarray coriolis,DTYPE_f gravity,np.ndarray dx,DTYPE_f dy,DTYPE_f dt,np.int_t sponge_index):
 
 	# calculate acceleration of atmosphere using primitive equations on beta-plane
-	cpdef np.ndarray u_temp = dt*(-(u+abs(u))*(u - np.roll(u, 1, axis=1))/dx[:, None, None] - (u-abs(u))*(np.roll(u, -1, axis=1) - u)/dx[:, None, None] 
+	cdef np.ndarray u_temp = dt*(-(u+abs(u))*(u - np.roll(u, 1, axis=1))/dx[:, None, None] - (u-abs(u))*(np.roll(u, -1, axis=1) - u)/dx[:, None, None] 
 		- (v+abs(v))*(u - np.pad(u, ((1,0), (0,0), (0,0)), 'reflect', reflect_type='odd')[:-1,:,:])/dy - (v-abs(v))*(np.pad(u, ((0,1), (0,0), (0,0)), 'reflect', reflect_type='odd')[1:,:,:] - u)/dy 
 		- 0.5*(w+abs(w))*(u - np.pad(u, ((0,0), (0,0), (1,0)), 'reflect', reflect_type='odd')[:,:,:-1])/(pressure_levels - np.pad(pressure_levels, (1,0), 'reflect', reflect_type='odd')[:-1]) - 0.5*(w-abs(w))*(np.pad(u, ((0,0), (0,0), (0,1)), 'reflect', reflect_type='odd')[:,:,1:] - u)/(pressure_levels - np.pad(pressure_levels, (0,1), 'reflect', reflect_type='odd')[1:])
 		+ coriolis[:, None, None]*v - low_level.scalar_gradient_x_matrix(geopotential, dx) - 1E-5*u)
 
-	cpdef np.ndarray v_temp = dt*(-(u+abs(u))*(v - np.roll(v, 1, axis=1))/dx[:, None, None] - (u-abs(u))*(np.roll(v, -1, axis=1) - v)/dx[:, None, None]
+	cdef np.ndarray v_temp = dt*(-(u+abs(u))*(v - np.roll(v, 1, axis=1))/dx[:, None, None] - (u-abs(u))*(np.roll(v, -1, axis=1) - v)/dx[:, None, None]
 		- (v+abs(v))*(v - np.pad(v, ((1,0), (0,0), (0,0)), 'reflect', reflect_type='odd')[:-1,:,:])/dy - (v-abs(v))*(np.pad(v, ((0,1), (0,0), (0,0)), 'reflect', reflect_type='odd')[1:,:,:] - v)/dy 
 		- 0.5*(w+abs(w))*(v - np.pad(v, ((0,0), (0,0), (1,0)), 'reflect', reflect_type='odd')[:,:,:-1])/(pressure_levels - np.pad(pressure_levels, (1,0), 'reflect', reflect_type='odd')[:-1]) - 0.5*(w-abs(w))*(np.pad(v, ((0,0), (0,0), (0,1)), 'reflect', reflect_type='odd')[:,:,1:] - v)/(pressure_levels - np.pad(pressure_levels, (0,1), 'reflect', reflect_type='odd')[1:])
 		- coriolis[:, None, None]*u - low_level.scalar_gradient_y_matrix(geopotential, dy) - 1E-5*v)
 	
 	# advection only in sponge layer
-	cpdef np.ndarray u_temp_sponge = dt*(-(u+abs(u))*(u - np.roll(u, 1, axis=1))/dx[:, None, None] - (u-abs(u))*(np.roll(u, -1, axis=1) - u)/dx[:, None, None] 
+	cdef np.ndarray u_temp_sponge = dt*(-(u+abs(u))*(u - np.roll(u, 1, axis=1))/dx[:, None, None] - (u-abs(u))*(np.roll(u, -1, axis=1) - u)/dx[:, None, None] 
 		- (v+abs(v))*(u - np.pad(u, ((1,0), (0,0), (0,0)), 'reflect', reflect_type='odd')[:-1,:,:])/dy - (v-abs(v))*(np.pad(u, ((0,1), (0,0), (0,0)), 'reflect', reflect_type='odd')[1:,:,:] - u)/dy 
 		- 0.5*(w+abs(w))*(u - np.pad(u, ((0,0), (0,0), (1,0)), 'reflect', reflect_type='odd')[:,:,:-1])/(pressure_levels - np.pad(pressure_levels, (1,0), 'reflect', reflect_type='odd')[:-1]) - 0.05*(w-abs(w))*(np.pad(u, ((0,0), (0,0), (0,1)), 'reflect', reflect_type='odd')[:,:,1:] - u)/(pressure_levels - np.pad(pressure_levels, (0,1), 'reflect', reflect_type='odd')[1:])
 		- 1E-3*u)
-	cpdef np.ndarray v_temp_sponge = dt*(-(u+abs(u))*(v - np.roll(v, 1, axis=1))/dx[:, None, None] - (u-abs(u))*(np.roll(v, -1, axis=1) - v)/dx[:, None, None] 
+	cdef np.ndarray v_temp_sponge = dt*(-(u+abs(u))*(v - np.roll(v, 1, axis=1))/dx[:, None, None] - (u-abs(u))*(np.roll(v, -1, axis=1) - v)/dx[:, None, None] 
 		- (v+abs(v))*(v - np.pad(v, ((1,0), (0,0), (0,0)), 'reflect', reflect_type='odd')[:-1,:,:])/dy - (v-abs(v))*(np.pad(v, ((0,1), (0,0), (0,0)), 'reflect', reflect_type='odd')[1:,:,:] - v)/dy
 		- 0.5*(w+abs(w))*(v - np.pad(v, ((0,0), (0,0), (1,0)), 'reflect', reflect_type='odd')[:,:,:-1])/(pressure_levels - np.pad(pressure_levels, (1,0), 'reflect', reflect_type='odd')[:-1]) - 0.05*(w-abs(w))*(np.pad(v, ((0,0), (0,0), (0,1)), 'reflect', reflect_type='odd')[:,:,1:] - v)/(pressure_levels - np.pad(pressure_levels, (0,1), 'reflect', reflect_type='odd')[1:])
 		- 1E-3*v)
 	
-	cpdef np.ndarray u_add = np.zeros_like(u_temp)
-	cpdef np.ndarray v_add = np.zeros_like(v_temp)
+	cdef np.ndarray u_add = np.zeros_like(u_temp)
+	cdef np.ndarray v_add = np.zeros_like(v_temp)
 
 	u_add[:,:,:sponge_index] += u_temp[:,:,:sponge_index]
 	v_add[:,:,:sponge_index] += v_temp[:,:,:sponge_index]

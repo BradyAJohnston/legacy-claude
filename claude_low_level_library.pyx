@@ -136,7 +136,7 @@ cpdef solar(DTYPE_f insolation,DTYPE_f  lat,DTYPE_f lon,np.int_t t,DTYPE_f  day,
 
 cpdef solar_matrix(DTYPE_f insolation, np.ndarray  lat, np.ndarray lon, np.int_t t, DTYPE_f  day, DTYPE_f  year, DTYPE_f  axial_tilt):
 	cdef float sun_longitude = -t % day
-	# cdef float sun_latitude = axial_tilt*np.cos(t*2*np.pi/year)
+	# cpdef float sun_latitude = axial_tilt*np.cos(t*2*np.pi/year)
 	cdef float sun_latitude = axial_tilt*np.sin(t*2*np.pi/year)
 	cdef np.ndarray values = insolation*np.cos((lat-sun_latitude)*inv_180)
 	cdef np.ndarray lon_diff, cos_lon
@@ -243,10 +243,10 @@ cpdef grid_y_gradient_matrix(np.ndarray data,DTYPE_f polar_grid_resolution):
 	return (shift_north - shift_south) / (2 * polar_grid_resolution)
 
 cpdef grid_p_gradient_matrix(np.ndarray data, np.ndarray pressure_levels):
-	cpdef np.ndarray shift_up = np.pad(data, ((0,0), (0,0), (1,0)), 'edge')[:,:,:-1]
-	cpdef np.ndarray shift_down = np.pad(data, ((0,0), (0,0), (0,1)), 'edge')[:,:,1:]
-	cpdef np.ndarray shift_pressures_up = np.pad(pressure_levels, (1,0), 'edge')[:-1]
-	cpdef np.ndarray shift_pressures_down = np.pad(pressure_levels, (0,1), 'edge')[1:]
+	cdef np.ndarray shift_up = np.pad(data, ((0,0), (0,0), (1,0)), 'edge')[:,:,:-1]
+	cdef np.ndarray shift_down = np.pad(data, ((0,0), (0,0), (0,1)), 'edge')[:,:,1:]
+	cdef np.ndarray shift_pressures_up = np.pad(pressure_levels, (1,0), 'edge')[:-1]
+	cdef np.ndarray shift_pressures_down = np.pad(pressure_levels, (0,1), 'edge')[1:]
 
 	return (shift_down - shift_up)/(shift_pressures_down - shift_pressures_up)
 
@@ -255,7 +255,7 @@ cpdef grid_velocities(np.ndarray polar_plane,np.int_t grid_side_length,np.ndarra
 	cdef np.ndarray x_dot_add = np.zeros_like(x_dot)
 	cdef np.ndarray y_dot_add = np.zeros_like(y_dot)
 
-	# cdef np.ndarray w = w_plane(x_dot,y_dot,temperature,pressure_levels,polar_grid_resolution)
+	# cpdef np.ndarray w = w_plane(x_dot,y_dot,temperature,pressure_levels,polar_grid_resolution)
 
 	x_dot_add -= 0.5*(x_dot + abs(x_dot))*(x_dot - np.pad(x_dot,((0,0), (1,0), (0,0)), 'reflect', reflect_type='odd')[:,:-1,:])/polar_grid_resolution + 0.5*(x_dot - abs(x_dot))*(np.pad(x_dot, ((0,0), (0,1), (0,0)), 'reflect', reflect_type='odd')[:,1:,:] - x_dot)/polar_grid_resolution
 	x_dot_add -= 0.5*(y_dot + abs(y_dot))*(x_dot - np.pad(x_dot,((1,0), (0,0), (0,0)), 'reflect', reflect_type='odd')[:-1,:,:])/polar_grid_resolution + 0.5*(y_dot - abs(y_dot))*(np.pad(x_dot, ((0,1), (0,0), (0,0)), 'reflect', reflect_type='odd')[1:,:,:] - x_dot)/polar_grid_resolution
@@ -307,7 +307,7 @@ cpdef project_velocities_south(np.ndarray lon,np.ndarray x_dot,np.ndarray y_dot,
 
 cpdef polar_plane_advect(np.ndarray data,np.ndarray x_dot,np.ndarray y_dot, np.ndarray w, DTYPE_f polar_grid_resolution):
 	
-	cpdef np.ndarray output = np.zeros_like(data)
+	cdef np.ndarray output = np.zeros_like(data)
 
 	output += 0.5*(x_dot + abs(x_dot))*(data - np.pad(data, ((0,0), (1,0), (0,0)), 'reflect', reflect_type='odd')[:,:-1,:])/polar_grid_resolution 
 	output += 0.5*(x_dot - abs(x_dot))*(np.pad(data, ((0,0), (0,1), (0,0)), 'reflect', reflect_type='odd')[:,1:,:] - data)/polar_grid_resolution
