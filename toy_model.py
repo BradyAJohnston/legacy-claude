@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 import time
 import sys
 import pickle
-import claude_low_level_library as low_level
-import claude_top_level_library as top_level
+from . import claude_low_level_library as low_level
+from . import claude_top_level_library as top_level
 # from twitch import prime_sub
 
 ######## CONTROL ########
