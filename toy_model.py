@@ -682,6 +682,7 @@ def timestep():
 	time_taken = float(round(time.time() - initial_time, 3))
 
 	print('Time: ', str(time_taken), 's')
+	return temperature_world
 
 if __name__ == "__main__":
     while True:

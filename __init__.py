@@ -23,14 +23,19 @@ bl_info = {
 
 import bpy
 from . import claude
+from .toy_model import temperature_world
 
 def register():
+    bpy.utils.register_class(claude.CL_OT_Initialise)
     bpy.app.handlers.frame_change_pre.append(
         claude._timestep
     )
 
 def unregister():
-    pass
+    bpy.utils.unregister_class(claude.CL_OT_Initialise)
+    bpy.app.handlers.frame_change_pre.remove(
+        claude._timestep
+    )
 
 if __name__ == "__main__":
     register()
